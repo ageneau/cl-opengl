@@ -36,58 +36,70 @@
 ;;; EXT_framebuffer_object
 ;;;
 
+#+normalgl 
 (import-export %gl:is-renderbuffer-ext
                %gl:bind-renderbuffer-ext)
 
+#+normalgl 
 (defun delete-renderbuffers (renderbuffers)
   (with-opengl-sequence (array '%gl:uint renderbuffers)
     (%gl:delete-renderbuffers (length renderbuffers) array)))
 
+#+normalgl 
 (defun gen-renderbuffers (count)
   (with-foreign-object (renderbuffer-array '%gl:uint count)
     (%gl:gen-renderbuffers count renderbuffer-array)
     (loop for i below count
           collecting (mem-aref renderbuffer-array '%gl:uint i))))
 
+#+normalgl 
 (defun delete-renderbuffers-ext (renderbuffers)
   (with-opengl-sequence (array '%gl:uint renderbuffers)
     (%gl:delete-renderbuffers-ext (length renderbuffers) array)))
 
+#+normalgl 
 (defun gen-renderbuffers-ext (count)
   (with-foreign-object (renderbuffer-array '%gl:uint count)
     (%gl:gen-renderbuffers-ext count renderbuffer-array)
     (loop for i below count
           collecting (mem-aref renderbuffer-array '%gl:uint i))))
 
+#+normalgl 
 (import-export %gl:renderbuffer-storage %gl:renderbuffer-storage-ext)
 
 #+nil
 (defun get-renderbuffer-parameter-ext (target pname)
   )
 
+#+normalgl 
 (import-export %gl:is-framebuffer %gl:is-framebuffer-ext
                %gl:bind-framebuffer %gl:bind-framebuffer-ext)
 
+#+normalgl 
 (defun delete-framebuffers (framebuffers)
   (with-opengl-sequence (array '%gl:uint framebuffers)
     (%gl:delete-framebuffers (length framebuffers) array)))
 
+#+normalgl 
 (defun gen-framebuffers (count)
   (with-foreign-object (framebuffer-array '%gl:uint count)
     (%gl:gen-framebuffers count framebuffer-array)
     (loop for i below count
           collecting (mem-aref framebuffer-array '%gl:uint i))))
 
+#+normalgl 
 (defun delete-framebuffers-ext (framebuffers)
   (with-opengl-sequence (array '%gl:uint framebuffers)
     (%gl:delete-framebuffers-ext (length framebuffers) array)))
 
+#+normalgl 
 (defun gen-framebuffers-ext (count)
   (with-foreign-object (framebuffer-array '%gl:uint count)
     (%gl:gen-framebuffers-ext count framebuffer-array)
     (loop for i below count
           collecting (mem-aref framebuffer-array '%gl:uint i))))
 
+#+normalgl 
 (import-export %gl:check-framebuffer-status %gl:check-framebuffer-status-ext
                %gl:framebuffer-texture-1d %gl:framebuffer-texture-1d-ext
                %gl:framebuffer-texture-2d %gl:framebuffer-texture-2d-ext
@@ -99,4 +111,5 @@
   (ecase pname
     (:framebuffer )))
 
+#+normalgl 
 (import-export %gl:generate-mipmap %gl:generate-mipmap-ext)

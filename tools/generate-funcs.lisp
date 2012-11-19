@@ -101,6 +101,10 @@
     ("GetInternalformativ" . "get-internal-format-iv")
 ))
 
+
+(defvar *gles-ignored-set* (make-hash-table :test #'equalp))
+
+
 (defparameter *whole-words*
   '("push" "depth" "mesh" "finish" "flush" "attach" "detach" "through" "width"
     "interleaved" "load" "end" "bind" "named" "grid" "coord" "read" "blend"
@@ -339,8 +343,8 @@
 ;;; passing lists of strings to multi-replace misses some cl-ppcre
 ;;; optimizations, so make sure we build scanners in advance
 (defparameter *remap-base-types-regexes*
-  (list (mapcar 'create-scanner '("EXT" "NV" "ARB"))
-        '("-ext" "-nv" "-arb")))
+  (list (mapcar 'create-scanner '("EXT" "NV" "ARB" "OES"))
+        '("-ext" "-nv" "-arb" "-oes")))
 (defun remap-base-types (type)
   (cond
     ((assoc type *base-types* :test #'string=)
@@ -433,15 +437,23 @@
   (format stream ")~%"))
 
 (defun new-fun (name)
-  ;; (format t " starting function : ~a ~%" name)
+  (format t " starting function : ~a ~%" name)
   (setf *current-fun* (make-instance 'fun-spec :name name)))
 
 (defun finish-fun ()
   (when *current-fun*
-    ;;(format t " finishing function ~a ~%" *current-fun*)
-    ;;    (dump-fun-wrapper t *current-fun*)
-    (push *current-fun* *function-list*)
+    (format t " finishing function ~a ~%" *current-fun*)
+    (format t " category ~a ~%" (category *current-fun*))
+
+    (multiple-value-bind (value present-p)
+        (gethash (mangle-for-c (name *current-fun*)) *gles-ignored-set*)
+      (if present-p
+          (format t "Ignoring:~a~%" (name *current-fun*))
+          (progn
+            ;;    (dump-fun-wrapper t *current-fun*)
+            (push *current-fun* *function-list*))))
     (setf *current-fun* nil)))
+    
 
 (defun add-param (name type io val-array array-size retained)
   (declare (ignorable io array-size retained))
@@ -521,6 +533,7 @@
    (ignore-tag "glxvectorequiv")
    (ignore-tag "glextmask")
    (ignore-tag "subcategory")
+   
    (ignore-matcher "^@@@.*$")
 
    (make-matcher "^(\\w+)\\(.*\\)$"
@@ -589,18 +602,9 @@
 ;;; really should do it while parsing the file, looks easier to do
 ;;; separately than patch into the enum parsing code though...
 (defun get-glext-version (stream)
-  (loop for line = (read-line stream nil nil)
-        while line
-        do (multiple-value-bind (match regs)
-               #++(scan-to-strings "^passthru:\\s+.*last updated ([^\\s]+)\\s*"
-                                line)
-               (scan-to-strings "^# \\$Revision:.*\\$Date:\\s+(.*)\\s\\$$"
-                                line)
-             (when match (setf *glext-last-updated* (aref regs 0))))
-        (multiple-value-bind (match regs)
-            (scan-to-strings
-             "^passthru:\\s+#define GL_GLEXT_VERSION\\s+([^\\s]+)" line)
-          (when match (setf *glext-version* (parse-integer (aref regs 0))))))
+  (setf *glext-version* "2012-08-06 08:39:04 -0700 (Mon, 06 Aug 2012)")
+  (setf *glext-last-updated* "2012-08-06")
+  
   ;; 3.2 .spec files don't appear to have version/modification times.
   ;; Using hand coded values for now, might want to parse glext.h to get
   ;; version/date if they don't put it back in .specs
@@ -626,8 +630,17 @@
          (enumext-spec (merge-pathnames "enumext.spec" spec-dir))
          (binding-package-file (merge-pathnames "bindings-package.lisp"
                                                 gl-dir))
-         (funcs-file (merge-pathnames "funcs.lisp" gl-dir)))
+         (funcs-file (merge-pathnames "funcs.lisp" gl-dir))
+         (gles-ignored (merge-pathnames "gles-ignored.txt" spec-dir)))
 
+
+    (with-open-file (stream gles-ignored)
+      (loop for line = (read-line stream nil 'eof)
+         until (eq line 'eof)
+         do (progn
+              (format t "~&;; Ignoring function ~A not in GLES2 ~%"
+                      line)
+              (setf (gethash line *gles-ignored-set*) nil))))
 
     (format t "~&;; loading list of bitfield enum types from ~A~%"
             (namestring bitfields.lisp))

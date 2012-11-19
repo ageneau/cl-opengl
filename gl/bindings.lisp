@@ -73,8 +73,10 @@
                               ,result-type)
            ,@(cond
               ((string= cname "glGetError") ())
+              #+normalgl
               ((string= cname "glBegin")
                `((setf *in-begin* t)))
+              #+normalgl
               ((string= cname "glEnd")
                `((setf *in-begin* nil)
                  (check-error ',lname)))
@@ -180,6 +182,7 @@
                   (check-error ',lisp-name))))
     (apply lisp-name args)))
 
+#-(and (not normalgl) cross)
 (defmacro defglextfun ((foreign-name lisp-name) result-type &rest body)
   (let ((args-list (mapcar #'first body)))
     `(progn
@@ -189,3 +192,30 @@
                                ',body ,@args-list))
        (setf (get ',lisp-name 'proc-address-dummy) #',lisp-name)
        ',lisp-name)))
+
+#+(and (not normalgl) cross)
+(defmacro defglextfun ((cname lname) result-type &body body)
+  `(progn
+     (declaim (inline ,lname))
+     #-cl-opengl-no-check-error
+       (defun ,lname ,(mapcar #'first body)
+         (multiple-value-prog1
+             (foreign-funcall (,cname :library opengl)
+                              ,@(loop for i in body
+                                   collect (second i)
+                                   collect (first i))
+                              ,result-type)
+           ,@(cond
+              ((string= cname "glGetError") ())
+              #+normalgl
+              ((string= cname "glBegin")
+               `((setf *in-begin* t)))
+              #+normalgl
+              ((string= cname "glEnd")
+               `((setf *in-begin* nil)
+                 (check-error ',lname)))
+              (t
+               `((check-error ',lname))))))
+     #+cl-opengl-no-check-error
+     (defcfun (,cname ,lname :library opengl) ,result-type ,@body)))
+

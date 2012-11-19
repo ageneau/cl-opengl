@@ -88,7 +88,8 @@
    #:gen-vertex-array
    #:gen-vertex-arrays
    #:delete-vertex-arrays
-   #:bind-vertex-array
+   #+normalgl #:bind-vertex-array
+   #-normalgl #:bind-vertex-array-oes
    ;; 2.11.1 Controlling the Viewport
    #:depth-range
    #:viewport

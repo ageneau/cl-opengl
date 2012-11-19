@@ -33819,3 +33819,87 @@ newcategory: NV_shader_atomic_float
 
 # (none)
 newcategory: AMD_query_buffer_object
+
+
+###############################################################################
+#
+# OES Extension #1
+# OES_vertex_array_object commands (also OpenGL 3.0)
+#
+###############################################################################
+
+BindVertexArrayOES(array)
+	return		void
+	param		array		UInt32 in value
+	category	ARB_vertex_array_object
+	version		3.0
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+DeleteVertexArraysOES(n, arrays)
+	return		void
+	param		n		SizeI in value
+	param		arrays		UInt32 in array [n]
+	category	ARB_vertex_array_object
+	version		3.0
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+GenVertexArraysOES(n, arrays)
+	return		void
+	param		n		SizeI in value
+	param		arrays		UInt32 out array [n]
+	category	ARB_vertex_array_object
+	version		3.0
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+IsVertexArrayOES(array)
+	return		Boolean
+	param		array		UInt32 in value
+	category	ARB_vertex_array_object
+	version		3.0
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		?
+
+GetBufferPointervOES(target, pname, params)
+	return		void
+	param		target		BufferTargetARB in value
+	param		pname		BufferPointerNameARB in value
+	param		params		VoidPointer out array [1]
+	category	VERSION_1_5
+	dlflags		notlistable
+	version		1.5
+	extension
+	glxsingle	?
+	glxflags	ignore
+	offset		694
+
+MapBufferOES(target, access)
+	return		VoidPointer
+	param		target		BufferTargetARB in value
+	param		access		BufferAccessARB in value
+	category	VERSION_1_5
+	version		1.5
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		697
+
+UnmapBufferOES(target)
+	return		Boolean
+	param		target		BufferTargetARB in value
+	category	VERSION_1_5
+	version		1.5
+	extension
+	glxropcode	?
+	glxflags	ignore
+	offset		698

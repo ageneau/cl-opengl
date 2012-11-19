@@ -794,9 +794,12 @@
 ;;; Define query functions for the basic types.
 (define-query-function get-boolean %gl:get-boolean-v %gl:boolean)
 (define-query-function get-integer %gl:get-integer-v %gl:int)
+#+normalgl 
 (define-query-function get-integer-64 %gl:get-integer-64-v %gl:int64)
 (define-query-function get-float %gl:get-float-v %gl:float single-float)
+#+normalgl 
 (define-query-function get-double %gl:get-double-v %gl:double double-float)
+#+normalgl
 (define-query-function get-pointer %gl:get-pointer-v :pointer)
 
 ;;; Define an indexed query function NAME that calls the OpenGL
@@ -817,10 +820,15 @@
 
 ;;; Define query functions for the basic types.
 ;;; fixme: should these be named get-*-indexed instead of get-*-i?
+#+normalgl 
 (define-indexed-query-function get-boolean-i %gl:get-boolean-i-v %gl:boolean)
+#+normalgl 
 (define-indexed-query-function get-integer-i %gl:get-integer-i-v %gl:int)
+#+normalgl 
 (define-indexed-query-function get-integer-64-i %gl:get-integer-64-i-v %gl:int64)
+#+normalgl 
 (define-indexed-query-function get-float-i %gl:get-float-i-v %gl:float single-float)
+#+normalgl 
 (define-indexed-query-function get-double-i %gl:get-double-i-v %gl:double double-float)
 
 (defmacro define-vertex-attrib-query-function (name fn type &optional (lisp-type t))
@@ -872,8 +880,10 @@
 
 
 (import-export %gl:get-string)
+#+normalgl 
 (import-export %gl:get-string-i)
 
+#+normalgl 
 (defun get-clip-plane (plane)
   (with-foreign-object (buf '%gl:double 4)
     (%gl:get-clip-plane plane buf)
@@ -882,6 +892,7 @@
         (setf (aref result i) (mem-aref buf '%gl:double i)))
       result)))
 
+#+normalgl 
 (defun get-multisample (pname index)
   (with-foreign-object (buf '%gl:float 2)
     (%gl:get-multisample-fv pname index buf)
@@ -1081,6 +1092,7 @@
 (definline enabledp (cap)
   (%gl:is-enabled cap))
 
+#+normalgl 
 (definline enabledp-i (cap index)
   (%gl:is-enabled-i cap index))
 
@@ -1110,12 +1122,15 @@
 
 (defun parse-gl-version-string-float (string)
   (let* ((dot nil)
+         (start (position-if (lambda (c) (digit-char-p c))
+                               string))
          (end (position-if-not (lambda (c) (or (digit-char-p c)
                                                (and (char= c #\.)
                                                     (not dot)
                                                     (setf dot t))))
-                               string)))
-    (values (read-from-string string nil 0.0 :end end))))
+                               string
+                               :start start)))
+    (values (read-from-string string nil 0.0 :start start :end end))))
 
 ;; external
 (defun gl-version ()
@@ -1148,6 +1163,7 @@
 
 
 ;; external
+#+normalgl 
 (defun gl3-extension-present-p (name)
   "Check for presence of extension NAME useing only non-deprecated gl3
 functionality. Currently not implemented for speed, so don't use in
@@ -1210,6 +1226,7 @@ currently implemented for speed, so avoid in inner loops"
     (otherwise
      (get-program-aux program pname :int))))
 
+#+normalgl 
 (define-get-function get-active-uniform-block-aux
     (program uniformblockindex pname)
   (%gl:get-active-uniform-block-iv :int int))
@@ -1231,6 +1248,7 @@ currently implemented for speed, so avoid in inner loops"
     (otherwise
      (get-active-uniform-block-aux program block-index pname :int))))
 
+#+normalgl 
 (defun get-active-uniform-block-name (program block-index)
   (let ((name-length (get-active-uniform-block program block-index
                                                :uniform-block-name-length)))
@@ -1252,9 +1270,10 @@ currently implemented for speed, so avoid in inner loops"
 (defun get-shader-info-log (shader)
   "Returns as a string the entire info log for SHADER"
   (let ((info-log-length (get-shader shader :info-log-length)))
-    (with-foreign-object (info-log '%gl:char info-log-length)
-      (%gl:get-shader-info-log shader info-log-length (null-pointer) info-log)
-      (foreign-string-to-lisp info-log))))
+    (when (> info-log-length 0)
+      (with-foreign-object (info-log '%gl:char info-log-length)
+        (%gl:get-shader-info-log shader info-log-length (null-pointer) info-log)
+        (foreign-string-to-lisp info-log)))))
 
 (defun get-program-info-log (program)
   "Returns as a string the entire info log for PROGRAM"
@@ -1279,17 +1298,21 @@ currently implemented for speed, so avoid in inner loops"
 ;;                            attributes)))
 
 ;; external
+#+normalgl 
 (defun push-attrib (&rest attributes)
   (declare (dynamic-extent attributes))
   (%gl:push-attrib attributes))
 
+#+normalgl 
 (define-compiler-macro push-attrib (&whole form &rest attributes)
   (if (every #'keywordp attributes)
       `(%gl:push-attrib ,(foreign-bitfield-value '%gl:AttribMask attributes))
       form))
 
+#+normalgl 
 (import-export %gl:pop-attrib)
 
+#+normalgl 
 (defmacro with-pushed-attrib ((&rest attributes) &body body)
   `(progn
      (push-attrib ,@attributes)
@@ -1297,17 +1320,21 @@ currently implemented for speed, so avoid in inner loops"
        (pop-attrib))))
 
 ;; external
+#+normalgl 
 (defun push-client-attrib (&rest attributes)
   (declare (dynamic-extent attributes))
   (%gl:push-client-attrib attributes))
 
+#+normalgl 
 (define-compiler-macro push-client-attrib (&whole form &rest attributes)
   (if (every #'keywordp attributes)
       `(%gl:push-client-attrib ,(foreign-bitfield-value '%gl:ClientAttribMask attributes))
       form))
 
+#+normalgl 
 (import-export %gl:pop-client-attrib)
 
+#+normalgl 
 (defmacro with-pushed-client-attrib ((&rest attributes) &body body)
   `(progn
      (push-client-attrib ,attributes)

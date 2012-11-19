@@ -37,4 +37,11 @@
   (:windows "opengl32.dll" :convention :stdcall)
   (:unix (:or "libGL.so.4" "libGL.so.3" "libGL.so.2" "libGL.so.1" "libGL.so")))
 
+#-(and ecl (not dffi))
 (use-foreign-library opengl)
+
+#+(and ecl (not dffi) (not cross))
+(eval-when (:compile-toplevel)
+  (ffi::do-load-foreign-library
+      #+darwin "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib"
+      #-darwin "/usr/lib/libGL.so"))

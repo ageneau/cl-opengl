@@ -1,0 +1,14 @@
+#! /bin/bash
+
+NM=nm
+SDK=$(xcodebuild -version -sdk iphonesimulator Path)
+GLES_FRAMEWORK=$SDK/System/Library/Frameworks/OpenGLES.framework/OpenGLES
+
+symbols_pipe='cut -c 10- |grep -e "^[tT]" |cut -c 3- |grep -v -e "Private]\?$"'
+
+eval "$NM $GLES_FRAMEWORK |$symbols_pipe > symbols_ios.txt"
+eval "cat symbols_ios.txt | grep -e '^\([+-]\[EAGLContext\|_EAGL\)' | grep -v -i debug > symbols_EAGL.txt"
+eval "cat symbols_ios.txt | grep -e 'APPLE$' > symbols_APPLE.txt"
+eval "cat symbols_ios.txt | grep -e 'EXT$' > symbols_EXT.txt"
+eval "cat symbols_ios.txt | grep -e 'OES$' > symbols_OES.txt"
+eval "cat symbols_ios.txt | grep -e '^_gl' | grep -v -e '\(OES\|EXT\|APPLE\)$' > symbols_GL.txt"

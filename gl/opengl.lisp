@@ -45,8 +45,10 @@
 
 ;;; 2.6.1 Begin and End
 
+#+normalgl
 (import-export %gl:begin %gl:end)
 
+#+normalgl
 (defmacro with-primitives (mode &body body)
   `(prog2
        (begin ,mode)
@@ -54,6 +56,7 @@
      (end)))
 
 ;;; synonym for with-primitives.
+#+normalgl
 (defmacro with-primitive (mode &body body)
   `(prog2
        (begin ,mode)
@@ -62,33 +65,40 @@
 
 ;;; 2.6.2 Polygon Edges
 
+#+normalgl
 (import-export %gl:edge-flag)
 
 ;;;
 ;;; 2.7 Vertex Specification
 ;;;
-
+#+normalgl
 (definline vertex (x y &optional (z 0.0) (w 1.0))
   (%gl:vertex-4f x y z w))
 
+#+normalgl
 (definline tex-coord (s &optional (r 0.0) (t* 0.0) (q 1.0))
   (%gl:tex-coord-4f s r t* q))
 
 (definline multi-tex-coord (texture s &optional (t* 0.0) (r 0.0) (q 1.0))
   (%gl:multi-tex-coord-4f texture s t* r q))
 
+#+normalgl
 (definline normal (x y z)
   (%gl:normal-3f x y z))
 
+#+normalgl
 (definline fog-coord (coord)
   (%gl:fog-coord-f coord))
 
+#+normalgl
 (definline color (r g b &optional (a 1.0))
   (%gl:color-4f r g b a))
 
+#+normalgl
 (definline secondary-color (r g b)
   (%gl:secondary-color-3f r g b))
 
+#+normalgl
 (definline index (index)
   (%gl:index-i index))
 
@@ -99,9 +109,9 @@
 ;;; 2.8 Vertex Arrays
 ;;;
 
-(import-export %gl:array-element
-               %gl:enable-client-state
-               %gl:disable-client-state
+(import-export #+normalgl %gl:array-element
+               #+normalgl %gl:enable-client-state
+               #+normalgl %gl:disable-client-state
                %gl:client-active-texture
                %gl:enable-vertex-attrib-array
                %gl:disable-vertex-attrib-array
@@ -116,6 +126,7 @@
                      (gl-array-pointer-offset array offset)))
 
 (import-export %gl:vertex-attrib-pointer
+               #+normalgl
                %gl:vertex-attrib-ipointer)
 
 ;;;
@@ -183,6 +194,7 @@
            `(progn
               (client-active-texture ,stage)
               (,func-name ,size ,gl-type ,stride ,address-expr))))
+        #+normalgl
         (edge-flag                      ; type is fixed
          `(,func-name ,stride ,address-expr))
         (vertex-attrib
@@ -364,6 +376,7 @@ another buffer is bound within FORMS."
 ;;; 2.10 Rectangles
 ;;;
 
+#+normalgl
 (definline rect (x1 y1 x2 y2)
   (%gl:rect-f x1 y1 x2 y2))
 
@@ -372,22 +385,33 @@ another buffer is bound within FORMS."
 ;;;
 (defun delete-vertex-arrays (arrays)
   (with-opengl-sequence (array '%gl:uint arrays)
-    (%gl:delete-vertex-arrays (length arrays) array)))
+    #+normalgl
+    (%gl:delete-vertex-arrays (length arrays) array)
+    #-normalgl
+    (%gl:delete-vertex-arrays-oes (length arrays) array)))
 
 (defun gen-vertex-arrays (count)
   (with-foreign-object (array '%gl:uint count)
+    #+normalgl
     (%gl:gen-vertex-arrays count array)
+    #-normalgl
+    (%gl:gen-vertex-arrays-oes count array)
     (loop for i below count
        collecting (mem-aref array '%gl:uint i))))
 
 ;; shortcut for the common case where we only want 1
 (defun gen-vertex-array ()
   (with-foreign-object (array '%gl:uint 1)
+    #+normalgl
     (%gl::gen-vertex-arrays 1 array)
+    #-normalgl
+    (%gl::gen-vertex-arrays-oes 1 array)
     (mem-aref array '%gl:uint 0)))
 
+#+normalgl
 (import-export %gl:bind-vertex-array)
-
+#-normalgl
+(import-export %gl:bind-vertex-array-oes)
 
 ;;;
 ;;; 2.11 Coordinate Transformations
@@ -395,57 +419,68 @@ another buffer is bound within FORMS."
 
 ;;; 2.11.1 Controlling the Viewport
 
-(import-export %gl:depth-range
+(import-export #+normalgl %gl:depth-range
                %gl:viewport)
 
 ;;; 2.11.2 Matrices
 
+#+normalgl
 (import-export %gl:matrix-mode)
 
+#+normalgl
 (defmacro with-foreign-matrix ((sym matrix) &body body)
   `(with-foreign-object (,sym '%gl:float 16)
      (dotimes (i 16)
        (setf (mem-aref ,sym '%gl:float i) (row-major-aref ,matrix i)))
      ,@body))
 
+#+normalgl
 (defun load-matrix (matrix)
   (with-foreign-matrix (foreign-matrix matrix)
     (%gl:load-matrix-f foreign-matrix)))
 
+#+normalgl
 (defun mult-matrix (matrix)
   (with-foreign-matrix (foreign-matrix matrix)
     (%gl:mult-matrix-f foreign-matrix)))
 
+#+normalgl
 (defun load-transpose-matrix (matrix)
   (with-foreign-matrix (foreign-matrix matrix)
     (%gl:load-transpose-matrix-f foreign-matrix)))
 
+#+normalgl
 (defun mult-transpose-matrix (matrix)
   (with-foreign-matrix (foreign-matrix matrix)
     (%gl:mult-transpose-matrix-f foreign-matrix)))
 
+#+normalgl
 (definline rotate (theta x y z)
   (%gl:rotate-f theta x y z))
 
+#+normalgl
 (definline translate (x y z)
   (%gl:translate-f x y z))
 
+#+normalgl
 (definline scale (x y z)
   (%gl:scale-f x y z))
 
-(import-export %gl:frustum
-               %gl:ortho
+(import-export #+normalgl %gl:frustum
+               #+normalgl %gl:ortho
                %gl:active-texture
-               %gl:load-identity
-               %gl:push-matrix
-               %gl:pop-matrix)
+               #+normalgl %gl:load-identity
+               #+normalgl %gl:push-matrix
+               #+normalgl %gl:pop-matrix)
 
+#+normalgl
 (defmacro with-pushed-matrix (&body body)
   `(progn
      (push-matrix)
      (multiple-value-prog1 (progn ,@body)
        (pop-matrix))))
 
+#+normalgl
 (defmacro with-pushed-matrix* ((matrix) &body body)
   ;; fixme: should once-only matrix, but only if it isn't a keyword
   `(progn
@@ -462,6 +497,7 @@ another buffer is bound within FORMS."
 ;;; 2.11.4 Generating Texture Coordinates
 ;;;
 
+#+normalgl
 (defun tex-gen (coord pname param)
   (ecase pname
     (:texture-gen-mode
@@ -476,6 +512,7 @@ another buffer is bound within FORMS."
 ;;; 2.12 Clipping
 ;;;
 
+#+normalgl
 (defun clip-plane (plane eqn)
   (when (< (length eqn) 4)
     (error "EQN must have 4 coefficents."))
@@ -485,10 +522,10 @@ another buffer is bound within FORMS."
 ;;;
 ;;; 2.13 Current Raster Position
 ;;;
-
+#+normalgl
 (definline raster-pos (x y &optional (z 0.0) (w 1.0))
   (%gl:raster-pos-4f x y z w))
-
+#+normalgl
 (definline window-pos (x y &optional (z 0.0))
   (%gl:window-pos-3f x y z))
 
@@ -501,7 +538,7 @@ another buffer is bound within FORMS."
 (import-export %gl:front-face)
 
 ;;; 2.14.2 Lighting Parameter Specification
-
+#+normalgl
 (defun material (face pname param)
   (ecase pname
     ((:ambient :diffuse :ambient-and-diffuse :specular :emission)
@@ -517,6 +554,7 @@ another buffer is bound within FORMS."
          (setf (mem-aref p '%gl:int i) (elt param i)))
        (%gl:material-iv face pname p)))))
 
+#+normalgl
 (defun light (light pname value)
   (ecase pname
     ((:ambient :diffuse :specular :position)
@@ -533,6 +571,7 @@ another buffer is bound within FORMS."
       :quadratic-attenuation)
      (%gl:light-f light pname (float value)))))
 
+#+normalgl
 (defun light-model (pname value)
   (ecase pname
     (:light-model-ambient
@@ -547,11 +586,11 @@ another buffer is bound within FORMS."
 
 
 ;;; 2.14.3 ColorMaterial
-
+#+normalgl
 (import-export %gl:color-material)
 
 ;;; 2.14.7 Flatshading
-
+#+normalgl
 (import-export %gl:shade-model)
 
 ;;;

@@ -37,12 +37,15 @@
 ;;; 3.3 Points
 ;;;
 
+#+normalgl
 (import-export %gl:point-size)
 
+#+normalgl
 (defun point-parameter (pname value)
   (ecase pname
     ((:point-size-min :point-size-max :point-fade-threshold-size)
      (%gl:point-parameter-f pname value))
+    #+normalgl
     (:point-sprite-coord-origin
      (%gl:point-parameter-i pname (foreign-enum-value '%gl:enum value)))
     (:point-distance-attenuation
@@ -56,6 +59,7 @@
 ;;;
 
 (import-export %gl:line-width
+               #+normalgl
                %gl:line-stipple)
 
 ;;;
@@ -67,14 +71,16 @@
 (import-export %gl:cull-face)
 
 ;;; 3.5.2 Stippling
-
+#+normalgl
 (defun polygon-stipple (pattern)
   (with-opengl-sequence (p '%gl:ubyte pattern)
     (%gl:polygon-stipple p)))
 
 ;;; 3.5.4 Options Controlling Polygon Rasterization
 
-(import-export %gl:polygon-mode %gl:polygon-offset)
+(import-export
+ #+normalgl %gl:polygon-mode
+ %gl:polygon-offset)
 
 ;;;
 ;;; 3.6 Pixel Rectangles
@@ -94,7 +100,7 @@
      (%gl:pixel-store-i pname value))))
 
 ;;; 3.6.3 Pixel Transfer Modes
-
+#+normalgl
 (defun pixel-transfer (pname value)
   (case pname
     ((:map-color :map-stencil)
@@ -104,6 +110,7 @@
     (t
      (%gl:pixel-transfer-f pname value))))
 
+#+normalgl
 (defun pixel-map (map values)
   (let ((n (length values)))
     (with-foreign-object (p '%gl:float n)
@@ -112,7 +119,7 @@
       (%gl:pixel-map-fv map n p))))
 
 ;;; 3.6.4 Rasterization of Pixel Rectangles
-
+#+normalgl
 (defun draw-pixels (width height format type data)
   (with-pixel-array (array type data)
     (%gl:draw-pixels width height format type array)))
@@ -131,6 +138,7 @@
           (error "Internal format must be either a keyword or an integer ~
                   in the range [1,4]."))))
 
+#+normalgl
 (defun tex-image-3d (target level internal-format width height depth border
                      format type data)
   (let ((internal-size (internal-format->int internal-format)))
@@ -151,6 +159,7 @@
           (%gl:tex-image-2d target level internal-size width height border
                             format type array)))))
 
+#+normalgl
 (defun tex-image-1d (target level internal-format width border format type data)
   (let ((internal-size (internal-format->int internal-format)))
     (if (pointerp data)
@@ -166,10 +175,12 @@
   (%gl:copy-tex-image-2d target level (internal-format->int internal-format)
                          x y width height border))
 
+#+normalgl
 (defun copy-tex-image-1d (target level internal-format x y width border)
   (%gl:copy-tex-image-1d target level (internal-format->int internal-format)
                          x y width border))
 
+#+normalgl
 (defun tex-sub-image-1d (target level xoffset width format type data)
   (if (pointerp data)
       (%gl:tex-sub-image-1d target level xoffset width format type data)
@@ -185,6 +196,7 @@
         (%gl:tex-sub-image-2d target level xoffset yoffset width height format
                               type array))))
 
+#+normalgl
 (defun tex-sub-image-3d (target level xoffset yoffset zoffset width height
                          depth format type data)
   (if (pointerp data)
@@ -194,12 +206,12 @@
         (%gl:tex-sub-image-3d target level xoffset yoffset zoffset width
                               height depth format type array))))
 
-(import-export %gl:copy-tex-sub-image-1d
+(import-export #+normalgl %gl:copy-tex-sub-image-1d
                %gl:copy-tex-sub-image-2d
-               %gl:copy-tex-sub-image-3d)
+               #+normalgl %gl:copy-tex-sub-image-3d)
 
 ;;; 3.8.3 Compressed Texture Images
-
+#+normalgl
 (defun compressed-tex-image-1d (target level internal-format width border
                                 data &optional (image-size (length data)))
   (if (pointerp data)
@@ -227,6 +239,7 @@
         (%gl:compressed-tex-image-3d target level internal-format width
                                      height depth border image-size array))))
 
+#+normalgl
 (defun compressed-tex-sub-image-1d (target level xoffset width format
                                     data &optional (image-size (length data)))
   (if (pointerp data)
@@ -310,12 +323,15 @@
     (loop for i below count
           collecting (mem-aref texture-array '%gl:uint i))))
 
+#+normalgl
 (import-export %gl:bind-sampler)
 
+#+normalgl
 (defun delete-sampler (samplers)
   (with-opengl-sequence (array '%gl:uint samplers)
     (%gl:delete-samplers (length samplers) array)))
 
+#+normalgl
 (defun gen-samplers (count)
   (with-foreign-object (sampler-array '%gl:uint count)
     (%gl:gen-samplers count sampler-array)
@@ -331,6 +347,7 @@
 ;;; TODO: check whether the new gl:boolean semantics didn't break
 ;;; these functions.
 
+#+normalgl
 (defun are-textures-resident (textures)
   (let ((count (length textures)))
     (with-opengl-sequence (texture-array '%gl:uint textures)
@@ -340,6 +357,7 @@
                   collecting (mem-aref residence-array '%gl:boolean i))
             t)))))
 
+#+normalgl
 (defun prioritize-textures (textures priorities)
   (let ((texture-count (length textures))
         (priority-count (length priorities)))
@@ -349,13 +367,14 @@
       (with-opengl-sequence (priority-array '%gl:clampf priorities)
         (%gl:prioritize-textures texture-count texture-array priority-array)))))
 
-
+#+normalgl
 (defun texture-resident-p (texture)
   (with-foreign-objects ((texture-pointer '%gl:uint)
                          (residence-pointer '%gl:boolean))
     (setf (mem-ref texture-pointer '%gl:uint) texture)
     (%gl:are-textures-resident 1 texture-pointer residence-pointer)))
 
+#+normalgl
 (defun prioritize-texture (texture priority)
   (with-foreign-objects ((texture-pointer '%gl:uint)
                          (priority-pointer '%gl:clampf))
@@ -368,6 +387,7 @@
 
 ;;; Ye gods, have mercy!
 
+#+normalgl
 (defun tex-env (target pname value)
   (let (pname-value)
     (ecase target
@@ -403,6 +423,7 @@
 ;;; 3.10 Fog
 ;;;
 
+#+normalgl
 (defun fog (pname param)
   (ecase pname
     (:fog-color
@@ -410,8 +431,10 @@
        (dotimes (i 4)
          (setf (mem-aref c '%gl:float i) (elt param i)))
        (%gl:fog-fv pname c)))
+    #+normalgl
     (:fog-mode
      (%gl:fog-i pname (foreign-enum-value '%gl:enum param)))
+    #+normalgl
     (:fog-coord-src
      (%gl:fog-i pname (foreign-enum-value '%gl:enum param)))
     ((:fog-density :fog-start :fog-end)
@@ -421,19 +444,22 @@
 ;;; 3.12.2 Shader Execution
 
 ;;; TODO: make these use :STRING
+#+normalgl
 (defun get-frag-data-location (program name)
   (with-foreign-string (s name)
     (%gl:get-frag-data-location program s)))
 
+#+normalgl
 (defun bind-frag-data-location (program color name)
   (with-foreign-string (s name)
     (%gl:bind-frag-data-location program color s)))
 
-
+#+normalgl
 (defun get-frag-data-location-ext (program name)
   (with-foreign-string (s name)
     (%gl:get-frag-data-location-ext program s)))
 
+#+normalgl
 (defun bind-frag-data-location-ext (program color name)
   (with-foreign-string (s name)
     (%gl:bind-frag-data-location-ext program color s)))

@@ -47,6 +47,7 @@
 
 ;;; 4.1.4 Alpha Test
 
+#+normalgl
 (import-export %gl:alpha-func)
 
 ;;; 4.1.5 Stencil Test
@@ -62,9 +63,11 @@
 
 ;;; 4.1.7 Occlusion Queries
 
+#+normalgl
 (import-export %gl:begin-query
                %gl:end-query)
 
+#+normalgl
 (defun gen-queries (n)
   "Returns N previously unused query object names in a
 list. These names are marked as used, but no object is associated
@@ -74,6 +77,7 @@ with them until the first time they are used by BEGIN-QUERY."
     (loop for i below n
           collecting (mem-aref ids '%gl:uint i))))
 
+#+normalgl
 (defun delete-queries (ids)
   "Deletes the names of the query objects contained in the sequence IDS."
   (let ((count (length ids)))
@@ -94,6 +98,7 @@ with them until the first time they are used by BEGIN-QUERY."
 
 ;;; 4.1.10 Logical Operation
 
+#+normalgl
 (import-export %gl:logic-op)
 
 ;;;
@@ -102,8 +107,10 @@ with them until the first time they are used by BEGIN-QUERY."
 
 ;;; 4.2.1 Selecting a Buffer for Writing
 
+#+normalgl
 (import-export %gl:draw-buffer)
 
+#+normalgl
 (defun draw-buffers (buffers)
   (with-opengl-sequence (seq '%gl:enum buffers)
     (%gl:draw-buffers (length buffers) seq)))
@@ -111,7 +118,7 @@ with them until the first time they are used by BEGIN-QUERY."
 
 ;;; 4.2.2 Fine Control of Buffer Updates
 
-(import-export %gl:index-mask
+(import-export #+normalgl %gl:index-mask
                %gl:color-mask
                %gl:depth-mask
                %gl:stencil-mask
@@ -128,13 +135,14 @@ with them until the first time they are used by BEGIN-QUERY."
       form))
 
 (import-export %gl:clear-color
-               %gl:clear-index
-               %gl:clear-depth
+               #+normalgl %gl:clear-index
+               #+normalgl %gl:clear-depth
                %gl:clear-stencil
-               %gl:clear-accum)
+               #+normalgl %gl:clear-accum)
 
 ;;; 4.2.4 The Accumulation Buffer
 
+#+normalgl
 (import-export %gl:accum)
 
 ;;;
@@ -159,8 +167,10 @@ with them until the first time they are used by BEGIN-QUERY."
         (setf (svref result-data i)
               (mem-aref array real-type i))))))
 
+#+normalgl
 (import-export %gl:read-buffer)
 
 ;;; 4.3.3 Copying Pixels
 
+#+normalgl
 (import-export %gl:copy-pixels)

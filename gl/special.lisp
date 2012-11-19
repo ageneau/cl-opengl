@@ -37,6 +37,7 @@
 ;;; 5.1 Evaluators
 ;;;
 
+#+normalgl
 (defun map1 (target u1 u2 points)
   (let* ((stride (array-dimension points 1))
          (order (array-dimension points 0))
@@ -46,6 +47,7 @@
         (setf (mem-aref array '%gl:float i) (float (row-major-aref points i))))
       (%gl:map-1f target (float u1) (float u2) stride order array))))
 
+#+normalgl
 (defun map2 (target u1 u2 v1 v2 points)
   (let* ((ustride (array-dimension points 2))
          (uorder (array-dimension points 1))
@@ -60,18 +62,23 @@
                 (float v1) (float v2) vstride vorder
                 array))))
 
+#+normalgl
 (definline eval-coord-1 (x)
   (%gl:eval-coord-1f x))
 
+#+normalgl
 (definline eval-coord-2 (x y)
   (%gl:eval-coord-2f x y))
 
+#+normalgl
 (definline map-grid-1 (n u1 u2)
   (%gl:map-grid-1f n u1 u2))
 
+#+normalgl
 (definline map-grid-2 (nu u1 u2 nv v1 v2)
   (%gl:map-grid-2f nu u1 u2 nv v1 v2))
 
+#+normalgl
 (import-export %gl:eval-mesh-1
                %gl:eval-mesh-2
                %gl:eval-point-1
@@ -81,12 +88,14 @@
 ;;; 5.2 Selection
 ;;;
 
+#+normalgl 
 (import-export %gl:init-names
                %gl:pop-name
                %gl:push-name
                %gl:load-name
                %gl:render-mode)
 
+#+normalgl 
 (defun select-buffer (array)
   (declare (ignore array))
   (error "not implemented"))
@@ -94,29 +103,32 @@
 ;;;
 ;;; 5.3 Feedback
 ;;;
-
+#+normalgl 
 (defun feedback-buffer (array)
   (declare (ignore array))
   (error "not implemented"))
 
+#+normalgl 
 (import-export %gl:pass-through)
 
 ;;;
 ;;; 5.4 Display Lists
 ;;;
 
+#+normalgl 
 (import-export %gl:new-list
                %gl:end-list
                %gl:call-list)
 
 ;;; Maybe we could optimize some more here if LISTS is vector
 ;;; with a suitable element-type.
+#+normalgl 
 (defun call-lists (lists)
   (with-opengl-sequence (array '%gl:uint lists)
     (%gl:call-lists (length lists)
                   #.(foreign-enum-value '%gl:enum :unsigned-int)
                   array)))
-
+#+normalgl 
 (import-export %gl:list-base
                %gl:gen-lists
                ;; to be consistent we probably should rename this
@@ -125,6 +137,7 @@
                %gl:delete-lists)
 
 ;;; Maybe UNWIND-PROTECT instead of PROG2?
+#+normalgl 
 (defmacro with-new-list ((id mode) &body body)
   `(prog2 (new-list ,id ',mode)
        (progn ,@body)
